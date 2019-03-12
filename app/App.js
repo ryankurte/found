@@ -8,7 +8,9 @@
  */
 
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {Platform, StyleSheet, Text, View, Alert, TouchableOpacity} from 'react-native';
+import MapView, {Marker} from 'react-native-maps';
+
 
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
@@ -19,15 +21,47 @@ const instructions = Platform.select({
 
 type Props = {};
 export default class App extends Component<Props> {
+  state = {
+    location: {
+      latitude: null,
+      longitude: null,
+      altitude: null,
+    }
+  };
+
+  componentWillMount = () => {
+    console.log("Requesting geolocation");
+    navigator.geolocation.setRNConfiguration({skipPermissionRequests: true});
+    navigator.geolocation.requestAuthorization();
+
+    this.findCoordinates();
+
+    let id = navigator.geolocation.watchPosition( (location) => {
+      this.setState({ location });
+    });
+
+   
+  }
+
   render() {
     return (
       <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to React Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
+        <Text>Loc: {JSON.stringify(this.state.location)}</Text>
       </View>
     );
   }
+
+  findCoordinates = () => {
+    console.log("Attempting to fetch current position");
+    navigator.geolocation.getCurrentPosition(
+      location => {
+        console.log("Got position: " + location);
+        this.setState({ location });
+      },
+      error => Alert.alert(error.message),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 }
+    );
+  };
 }
 
 const styles = StyleSheet.create({
@@ -46,5 +80,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#333333',
     marginBottom: 5,
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
   },
 });
