@@ -1,0 +1,17 @@
+{
+  "name": "found-server",
+  "version": "0.1.0",
+  "description": "found server",
+  "main": "src/index.js",
+  "scripts": {
+    "tsc": "tsc"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@types/express": "^4.16.1",
+    "express": "^4.16.4",
+    "typescript": "^3.3.3333"
+  }
+}
