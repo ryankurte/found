@@ -8,9 +8,10 @@
  */
 
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View, Alert, TouchableOpacity} from 'react-native';
+import {Platform, StyleSheet, Text, View, Alert, ScrollView, TouchableOpacity} from 'react-native';
 import MapView, {Marker} from 'react-native-maps';
 
+import { BleManager } from 'react-native-ble-plx';
 
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
@@ -22,15 +23,23 @@ const instructions = Platform.select({
 type Props = {};
 export default class App extends Component<Props> {
   state = {
+    message: "",
     location: {
       latitude: null,
       longitude: null,
       altitude: null,
-    }
+    },
+    devices: {}
   };
 
+  constructor() {
+    super();
+    this.manager = new BleManager();
+  }
+
   componentWillMount = () => {
-    console.log("Requesting geolocation");
+    this.setState({message: "Mount"});
+
     navigator.geolocation.setRNConfiguration({skipPermissionRequests: true});
     navigator.geolocation.requestAuthorization();
 
@@ -40,14 +49,41 @@ export default class App extends Component<Props> {
       this.setState({ location });
     });
 
+    const subscription = this.manager.onStateChange((state) => {
+      if (state === 'PoweredOn') {
+        this.setState({message: "BLE connected"});
+        subscription.remove();
+      }
+    }, true);
+
+    this.manager.startDeviceScan(null, null, (error, d) => {
+      if (error) {
+        alert(error);
+        return;
+      }
+
+      let device = {name: d.name, rssi: d.rssi, manufacturingData: d.manufacturerData };
+
+      let devices = this.state.devices;
+      devices[d.id] = device;
+
+      this.setState({ devices })
+    })
    
   }
 
   render() {
     return (
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+
       <View style={styles.container}>
-        <Text>Loc: {JSON.stringify(this.state.location)}</Text>
+      <Text>Hello</Text>
+        {this.state.message && <Text>Message: {'\r' + JSON.stringify(this.state.message, null, 4)}</Text>}
+        {this.state.location && <Text>Location: {'\r' + JSON.stringify(this.state.location, null, 4)}</Text>}
+        {this.state.devices && <Text>Devices: {'\r' + JSON.stringify(this.state.devices, null, 4)}</Text>}
       </View>
+
+      </ScrollView>
     );
   }
 
@@ -84,4 +120,7 @@ const styles = StyleSheet.create({
   map: {
     ...StyleSheet.absoluteFillObject,
   },
+  contentContainer: {
+    paddingVertical: 20
+  }
 });
